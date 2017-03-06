@@ -7,6 +7,16 @@
 require 'utils/parser'
 
 class SimpleConfig
+  # for configs that have keys whose values may be hashes
+  # (such as a mysql config that has [sections]), provide
+  # a hash whose values are accessible via methods to provide
+  # a good user experience with `its` blocks.
+  class ConfigHash < Hash
+    def method_missing(k)
+      fetch(k.to_s, nil)
+    end
+  end
+
   include CommentParser
 
   attr_reader :params, :groups
@@ -73,7 +83,7 @@ class SimpleConfig
     m = opts[:group_re].match(line)
     return nil if m.nil?
     @groups.push(m[1])
-    @vals = @params[m[1]] = {}
+    @vals = @params[m[1]] = ConfigHash.new
   end
 
   def parse_implicit_assignment_line(line, opts)
